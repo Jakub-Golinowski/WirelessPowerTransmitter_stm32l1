@@ -66,10 +66,17 @@ extern volatile uint8_t g_CS100Byte;
 
 void JG_Parse_DeviceBuffer();
 void JG_Parse_PLDMonitor();
+void JG_Parse_PLDThreshold();
+void JG_Parse_RxProp();
+void JG_Parse_RxPropCount();
+void JG_Parse_RxStats();
+void JG_Parse_TxStats();
+
 void JG_SubParse_ThresholdSetFromResistor();
 void JG_SubParse_FourBytesTo19Q13(uint32_t* OutIntegerPart19Bits, uint16_t* OutDecimalPart13Bits, uint8_t* RawFourBytesArrayMSBFirst);
 void JG_SubParse_TwoBytesTo6Q10(uint8_t* OutIntegerPart6Bits, uint16_t* OutDecimalPart10Bits, uint8_t* RawTwoBytesArrayMSBFirst);
 void JG_SubParse_TwoBytesTo13Q3(uint16_t* OutIntegerPart13Bits, uint8_t* OutDecimalPart3Bits, uint8_t* RawTwoBytesArrayMSBFirst);
 void JG_SubParse_TwoBytesTo10Q6(uint16_t* OutIntegerPart10Bits, uint8_t* OutDecimalPart6Bits, uint8_t* RawTwoBytesArrayMSBFIrst);
-
+void JG_SubParse_TwoBytesTo9Q7(uint16_t* OutIntegerPart9Bits, uint8_t* OutDecimalPart7Bits, uint8_t* RawTwoBytesArrayMSBFirst);
+void JG_SubParse_TwoBytesTo1Q15(uint8_t* OutIntegerPart1Bit, uint16_t* OutDecimalPart15Bits, uint8_t* RawTwoBytesArrayMSBFirst);
 #endif /* BQ500511_PARSER_H_ */

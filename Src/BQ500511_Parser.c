@@ -91,6 +91,82 @@ void JG_Parse_PLDMonitor(){
 	JG_SubParse_TwoBytesTo10Q6((uint16_t*)&g_OutputFrequency_kHz_int, (uint8_t*)&g_OutputFrequency_kHz_decimal, OutputFrequency_RawTwoBytes);
 }
 
+void JG_Parse_PLDThreshold(){
+	memcpy((uint16_t*)&g_PLD_Threshold, (uint16_t*)g_PLDThresholdRawBuffer, 2);
+}
+
+void JG_Parse_RxProp(){
+	memcpy((uint8_t*)&g_RxPropBuffer,(uint8_t*)(g_RxPropRawBuffer + 1), BQ500511A_RX_PROP_BUFFER_LENGTH);
+}
+
+void JG_Parse_RxPropCount(){
+	memcpy((uint16_t*)&g_RxPropCount, (uint8_t*)g_RxPropCountRawBuffer, 2);
+}
+
+void JG_Parse_RxStats(){
+
+	memcpy((uint8_t*)&g_SignalStrengthByte, (uint8_t*)g_RxStatsRawBuffer + 1, 1);
+
+	memcpy((uint8_t*)&g_EndPowerTransferByte, (uint8_t*)g_RxStatsRawBuffer + 2, 1);
+
+	memcpy((uint8_t*)&g_ControlErrorByte, (uint8_t*)g_RxStatsRawBuffer + 3, 1);
+
+	memcpy((uint8_t*)&g_ReceivedPowerByte, (uint8_t*)g_RxStatsRawBuffer + 4, 1);
+
+	memcpy((uint8_t*)&g_ChargeStatusByte, (uint8_t*)g_RxStatsRawBuffer + 5, 1);
+
+	memcpy((uint8_t*)&g_HoldoffByte, (uint8_t*)g_RxStatsRawBuffer + 6, 1);
+
+	memcpy((uint8_t*)&g_ConfigurationBuffer, (uint8_t*)g_RxStatsRawBuffer + 7, 5);
+
+	memcpy((uint8_t*)&g_IdentificationBffer, (uint8_t*)g_RxStatsRawBuffer + 12, 7);
+
+	memcpy((uint8_t*)&g_ExtendedIdentificationBuffer, (uint8_t*)g_RxStatsRawBuffer + 19, 4);
+
+}
+
+void JG_Parse_TxStats(){
+
+	uint8_t VoltageIn_RawTwoBytes[2];
+	memcpy((uint8_t*)&VoltageIn_RawTwoBytes, (uint8_t*)(g_TxStatsRawBuffer + 1), 2);
+	JG_SubParse_TwoBytesTo6Q10((uint8_t*)&g_VoltageIn_V_int, (uint16_t*)&g_VoltageIn_V_decimal, VoltageIn_RawTwoBytes);
+
+	uint8_t CurrentOut_RawTwoBytes[2];
+	memcpy((uint8_t*)&CurrentOut_RawTwoBytes, (uint8_t*)(g_TxStatsRawBuffer + 3), 2);
+	JG_SubParse_TwoBytesTo13Q3((uint16_t*)&g_CurrentOut_mA_int, (uint8_t*)&g_CurrentOut_mA_decimal, CurrentOut_RawTwoBytes);
+
+	uint8_t InternalTemperature_RawTwoBytes[2];
+	memcpy((uint8_t*)&InternalTemperature_RawTwoBytes, (uint8_t*)(g_TxStatsRawBuffer + 7), 2);
+	JG_SubParse_TwoBytesTo9Q7((uint16_t*)&g_InternalTemperature_degC_int, (uint8_t*)&g_InternalTemperature_degC_decimal, InternalTemperature_RawTwoBytes);
+
+	memcpy((uint16_t*)&g_GoodMessageCounter, (uint8_t*)g_TxStatsRawBuffer + 11, 2);
+
+	memcpy((uint16_t*)&g_BadMessageCounter, (uint8_t*)g_TxStatsRawBuffer + 15, 2);
+
+	uint8_t Frequency_RawTwoBytes[2];
+	memcpy((uint8_t*)&Frequency_RawTwoBytes, (uint8_t*)(g_TxStatsRawBuffer + 17), 2);
+	JG_SubParse_TwoBytesTo10Q6((uint16_t*)&g_Frequency_kHz_int, (uint8_t*)&g_Frequency_kHz_decimal, Frequency_RawTwoBytes);
+
+	uint8_t DutyCycle_RawTwoBytes[2];
+	memcpy((uint8_t*)&DutyCycle_RawTwoBytes, (uint8_t*)(g_TxStatsRawBuffer + 19), 2);
+	JG_SubParse_TwoBytesTo1Q15((uint8_t*)&g_DutyCycle_percent_int, (uint16_t*)&g_DutyCycle_percent_decimal, DutyCycle_RawTwoBytes);
+
+	memcpy((uint8_t*)&g_LedModeByte, (uint8_t*)(g_TxStatsRawBuffer + 21),1);
+
+	memcpy((uint8_t*)&g_LedStatusByte, (uint8_t*)(g_TxStatsRawBuffer + 22),1);
+
+	uint8_t FODThreshold_RawFourBytes[4];
+	memcpy((uint8_t*)&FODThreshold_RawFourBytes, (uint8_t*)(g_TxStatsRawBuffer + 23), 4);
+	JG_SubParse_FourBytesTo19Q13((uint32_t*)&g_FODThreshold_mW_int, (uint16_t*)&g_FODThreshold_mW_decimal, FODThreshold_RawFourBytes);
+
+	uint8_t ParasiticLossDetected_RawFourBytes[4];
+	memcpy((uint8_t*)&ParasiticLossDetected_RawFourBytes, (uint8_t*)(g_TxStatsRawBuffer + 27), 4);
+	JG_SubParse_FourBytesTo19Q13((uint32_t*)&g_ParasiticLossDetected_mW_int, (uint16_t*)&g_ParasiticLossDetected_mW_decimal, ParasiticLossDetected_RawFourBytes);
+
+	memcpy((uint8_t*)&g_CS100Byte, (uint8_t*)(g_TxStatsRawBuffer + 31),1);
+}
+
+
 
 
 void JG_SubParse_FourBytesTo19Q13(uint32_t* OutIntegerPart19Bits, uint16_t* OutDecimalPart13Bits, uint8_t* RawFourBytesArrayMSBFirst){
@@ -166,21 +242,38 @@ void JG_SubParse_TwoBytesTo10Q6(uint16_t* OutIntegerPart10Bits, uint8_t* OutDeci
 
 }
 
-//Deprecated
-void JG_SubParse_ThresholdSetFromResistor(){
+void JG_SubParse_TwoBytesTo9Q7(uint16_t* OutIntegerPart9Bits, uint8_t* OutDecimalPart7Bits, uint8_t* RawTwoBytesArrayMSBFirst){
+	uint8_t Mask_1MSbValid = 0x80;
+	uint8_t Mask_7LSbValid = 0x7F;
 
-	uint8_t Mask_3MSbValid = 0xE0;
-	uint8_t Mask_5LSbValid = 0x1F;
+	uint16_t TmpOutIntegerPart9Bits = 0;
+	uint8_t TmpOutDecimalPart7Bits = 0;
+	uint8_t TmpRawTwoBytesMSBFirst[2] = {0};
 
-	uint32_t ThresholdSetFromResistor_Integer19Bits = 0;
-	uint16_t ThresholdSetFromResistor_Decimal13Bits = 0;
-	uint8_t ThresholdSetFromResistor_RawBytes[4] = {0};
+	memcpy((uint8_t*)&TmpRawTwoBytesMSBFirst, RawTwoBytesArrayMSBFirst, 2);
 
-	memcpy((uint8_t*)&ThresholdSetFromResistor_RawBytes, (uint8_t*)(g_PLDMonitorRawBuffer + 3), 4);
+	TmpOutIntegerPart9Bits = (TmpRawTwoBytesMSBFirst[0] << 1) + ((TmpRawTwoBytesMSBFirst[1] & Mask_1MSbValid) >> 7);
+	TmpOutDecimalPart7Bits = (TmpRawTwoBytesMSBFirst[1] & Mask_7LSbValid);
 
-	ThresholdSetFromResistor_Integer19Bits = ((uint32_t)ThresholdSetFromResistor_RawBytes[0] << (8 + 3)) + ((uint32_t)ThresholdSetFromResistor_RawBytes[1] << + 3)	+ (((uint32_t)ThresholdSetFromResistor_RawBytes[2] & Mask_3MSbValid) >> 5);
-	ThresholdSetFromResistor_Decimal13Bits = (((uint16_t)ThresholdSetFromResistor_RawBytes[2] & Mask_5LSbValid) << 8) + (uint16_t)ThresholdSetFromResistor_RawBytes[3];
+	*OutIntegerPart9Bits = TmpOutIntegerPart9Bits;
+	*OutDecimalPart7Bits = TmpOutDecimalPart7Bits;
 
-	g_ThresholdSetFromResistor_mW_int = ThresholdSetFromResistor_Integer19Bits;
-	g_ThresholdSetFromResistor_mW_decimal = ThresholdSetFromResistor_Decimal13Bits;
+}
+
+void JG_SubParse_TwoBytesTo1Q15(uint8_t* OutIntegerPart1Bit, uint16_t* OutDecimalPart15Bits, uint8_t* RawTwoBytesArrayMSBFirst){
+	uint8_t Mask_1MSbValid = 0x80;
+	uint8_t Mask_7LSbValid = 0x7F;
+
+	uint8_t TmpOutIntegerPart1Bit = 0;
+	uint16_t TmpOutDecimalPart15Bits = 0;
+	uint8_t TmpRawTwoBytesMSBFirst[2] = {0};
+
+	memcpy((uint8_t*)&TmpRawTwoBytesMSBFirst, RawTwoBytesArrayMSBFirst, 2);
+
+	TmpOutIntegerPart1Bit = ((TmpRawTwoBytesMSBFirst[0] & Mask_1MSbValid) >> 7);
+	TmpOutDecimalPart15Bits = ((TmpRawTwoBytesMSBFirst[0] & Mask_7LSbValid) << 8) + TmpRawTwoBytesMSBFirst[1];
+
+	*OutIntegerPart1Bit = TmpOutIntegerPart1Bit;
+	*OutDecimalPart15Bits = TmpOutDecimalPart15Bits;
+
 }
