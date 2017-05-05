@@ -1,0 +1,41 @@
+Configuration	WirelessPowerTransmitter_128kB
+STM32CubeMX 	4.16.1
+Date	04/13/2017
+MCU	STM32L152RBTx
+
+
+
+PERIPHERALS	MODES	FUNCTIONS	PINS
+SYS	SysTick	SYS_VS_Systick	VP_SYS_VS_Systick
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+
+
+
+SOFTWARE PROJECT
+
+Project Settings : 
+Project Name : WirelessPowerTransmitter_128kB
+Project Folder : C:\Users\jakub\Atollic\TrueSTUDIO\ARM_workspace_7.0\WirelessPowerTransmitter_128kB
+Toolchain / IDE : EWARM
+Firmware Package Name and Version : STM32Cube FW_L1 V1.6.0
+
+
+Code Generation Settings : 
+STM32Cube Firmware Library Package : Copy all used libraries into the project folder
+Generate peripheral initialization as a pair of '.c/.h' files per peripherals : No
+Backup previously generated files when re-generating : No
+Delete previously generated files when not re-generated : Yes
+Set all free pins as analog (to optimize the power consumption) : No
+
+
+Toolchains Settings : 
+Compiler Optimizations : Balanced Size/Speed
+
+
+
+
+
+
