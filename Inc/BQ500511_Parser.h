@@ -1,7 +1,6 @@
 #ifndef BQ500511_PARSER_H_
 #define BQ500511_PARSER_H_
 
-#include "mini-printf.h"
 #include "BQ500511_I2C.h"
 
 #define BQ500511A_DEVICE_ID_BUFFER_LENGTH				(BQ500511A_I2C_DEVICE_ID_COMMAND_RESPONSE_LENGTH - 1)
@@ -13,7 +12,7 @@
 extern volatile uint8_t g_DeviceIdBuffer[BQ500511A_DEVICE_ID_BUFFER_LENGTH];
 
 extern volatile uint8_t g_ReportedReceivedPower_128thOfMaxPower;
-extern volatile uint8_t g_RawReportedMaxPower_mW;
+extern volatile uint8_t g_RawReportedMaxPower;
 extern volatile uint32_t g_ThresholdSetFromResistor_mW_int;
 extern volatile uint16_t g_ThresholdSetFromResistor_mW_decimal;
 extern volatile uint32_t g_CalculatedParasiticLoss_mW_int;
@@ -41,7 +40,17 @@ extern volatile uint8_t g_ReceivedPowerByte;
 extern volatile uint8_t g_ChargeStatusByte;
 extern volatile uint8_t g_HoldoffByte;
 extern volatile uint8_t g_ConfigurationBuffer[BQ500511A_CONFIGURATION_BUFFER_LENGTH];
+extern volatile uint32_t g_ReceiverMaxPower_W;
+extern volatile uint8_t g_PowerTransferControlType;
+extern volatile uint8_t g_NumberOfAdditionalPackets;
+extern volatile uint8_t g_WindowSize_ms;
+extern volatile uint8_t g_WindowOffset_ms;
 extern volatile uint8_t g_IdentificationBffer[BQ500511A_IDENTIFICATION_BUFFER_LENGTH];
+extern volatile uint8_t g_MajorQiVersion;
+extern volatile uint8_t g_MinorQiVersion;
+extern volatile uint16_t g_ManufacturerCode;
+extern volatile uint8_t g_ExtendedMode;
+extern volatile uint32_t g_BasicDeviceIdentifier;
 extern volatile uint8_t g_ExtendedIdentificationBuffer[BQ500511A_EXTENDED_IDENTIFICATION_BUFFER_LENGTH];
 
 extern volatile uint8_t g_VoltageIn_V_int;
@@ -79,4 +88,6 @@ void JG_SubParse_TwoBytesTo13Q3(uint16_t* OutIntegerPart13Bits, uint8_t* OutDeci
 void JG_SubParse_TwoBytesTo10Q6(uint16_t* OutIntegerPart10Bits, uint8_t* OutDecimalPart6Bits, uint8_t* RawTwoBytesArrayMSBFIrst);
 void JG_SubParse_TwoBytesTo9Q7(uint16_t* OutIntegerPart9Bits, uint8_t* OutDecimalPart7Bits, uint8_t* RawTwoBytesArrayMSBFirst);
 void JG_SubParse_TwoBytesTo1Q15(uint8_t* OutIntegerPart1Bit, uint16_t* OutDecimalPart15Bits, uint8_t* RawTwoBytesArrayMSBFirst);
+void JG_SubParse_Configuration();
+void JG_SubParse_Identification();
 #endif /* BQ500511_PARSER_H_ */

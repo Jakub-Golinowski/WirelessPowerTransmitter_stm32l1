@@ -4,7 +4,7 @@
 volatile uint8_t g_DeviceIdBuffer[BQ500511A_DEVICE_ID_BUFFER_LENGTH];
 
 volatile uint8_t g_ReportedReceivedPower_128thOfMaxPower;
-volatile uint8_t g_RawReportedMaxPower_mW;
+volatile uint8_t g_RawReportedMaxPower;
 volatile uint32_t g_ThresholdSetFromResistor_mW_int;
 volatile uint16_t g_ThresholdSetFromResistor_mW_decimal;
 volatile uint32_t g_CalculatedParasiticLoss_mW_int;
@@ -32,7 +32,17 @@ volatile uint8_t g_ReceivedPowerByte;
 volatile uint8_t g_ChargeStatusByte;
 volatile uint8_t g_HoldoffByte;
 volatile uint8_t g_ConfigurationBuffer[BQ500511A_CONFIGURATION_BUFFER_LENGTH];
+volatile uint32_t g_ReceiverMaxPower_W;
+volatile uint8_t g_PowerTransferControlType;
+volatile uint8_t g_NumberOfAdditionalPackets;
+volatile uint8_t g_WindowSize_ms;
+volatile uint8_t g_WindowOffset_ms;
 volatile uint8_t g_IdentificationBffer[BQ500511A_IDENTIFICATION_BUFFER_LENGTH];
+volatile uint8_t g_MajorQiVersion;
+volatile uint8_t g_MinorQiVersion;
+volatile uint16_t g_ManufacturerCode;
+volatile uint8_t g_ExtendedMode;
+volatile uint32_t g_BasicDeviceIdentifier;
 volatile uint8_t g_ExtendedIdentificationBuffer[BQ500511A_EXTENDED_IDENTIFICATION_BUFFER_LENGTH];
 
 volatile uint8_t g_VoltageIn_V_int;
@@ -62,7 +72,7 @@ void JG_Parse_DeviceBuffer(){
 void JG_Parse_PLDMonitor(){
 	memcpy((uint8_t*)&g_ReportedReceivedPower_128thOfMaxPower, (uint8_t*)(g_PLDMonitorRawBuffer + 1), 1);
 
-	memcpy((uint8_t*)&g_RawReportedMaxPower_mW, (uint8_t*)(g_PLDMonitorRawBuffer + 2), 1);
+	memcpy((uint8_t*)&g_RawReportedMaxPower, (uint8_t*)(g_PLDMonitorRawBuffer + 2), 1);
 
 	uint8_t ThresholdSetFromResistor_RawFourBytes[4];
 	memcpy((uint8_t*)&ThresholdSetFromResistor_RawFourBytes, (uint8_t*)(g_PLDMonitorRawBuffer + 3), 4);
@@ -84,7 +94,9 @@ void JG_Parse_PLDMonitor(){
 	memcpy((uint8_t*)&CalculatedInputPower_RawFourBytes, (uint8_t*)(g_PLDMonitorRawBuffer + 15), 4);
 	JG_SubParse_FourBytesTo19Q13((uint32_t*)&g_CalculatedInputPower_mW_int, (uint16_t*)&g_CalculatedInputPower_mW_decimal, CalculatedInputPower_RawFourBytes);
 
-	memcpy((uint16_t*)&g_FODPeak_V, (uint8_t*)(g_PLDMonitorRawBuffer + 21), 2);
+	uint8_t FODPeak_RawTwoBytes[2];
+	memcpy((uint8_t*)&FODPeak_RawTwoBytes, (uint8_t*)(g_PLDMonitorRawBuffer + 21), 2);
+	g_FODPeak_V = ((uint16_t)FODPeak_RawTwoBytes[0] << 8) + (uint16_t)FODPeak_RawTwoBytes[1];
 
 	uint8_t OutputFrequency_RawTwoBytes[2];
 	memcpy((uint8_t*)OutputFrequency_RawTwoBytes, (uint8_t*)(g_PLDMonitorRawBuffer + 28), 2);
@@ -118,8 +130,10 @@ void JG_Parse_RxStats(){
 	memcpy((uint8_t*)&g_HoldoffByte, (uint8_t*)g_RxStatsRawBuffer + 6, 1);
 
 	memcpy((uint8_t*)&g_ConfigurationBuffer, (uint8_t*)g_RxStatsRawBuffer + 7, 5);
+	JG_SubParse_Configuration();
 
 	memcpy((uint8_t*)&g_IdentificationBffer, (uint8_t*)g_RxStatsRawBuffer + 12, 7);
+	JG_SubParse_Identification();
 
 	memcpy((uint8_t*)&g_ExtendedIdentificationBuffer, (uint8_t*)g_RxStatsRawBuffer + 19, 4);
 
@@ -139,9 +153,14 @@ void JG_Parse_TxStats(){
 	memcpy((uint8_t*)&InternalTemperature_RawTwoBytes, (uint8_t*)(g_TxStatsRawBuffer + 7), 2);
 	JG_SubParse_TwoBytesTo9Q7((uint16_t*)&g_InternalTemperature_degC_int, (uint8_t*)&g_InternalTemperature_degC_decimal, InternalTemperature_RawTwoBytes);
 
-	memcpy((uint16_t*)&g_GoodMessageCounter, (uint8_t*)g_TxStatsRawBuffer + 11, 2);
 
-	memcpy((uint16_t*)&g_BadMessageCounter, (uint8_t*)g_TxStatsRawBuffer + 15, 2);
+	uint8_t GoodMessageCounter_RawTwoBytes[2];
+	memcpy((uint8_t*)&GoodMessageCounter_RawTwoBytes, (uint8_t*)(g_TxStatsRawBuffer + 11), 2);
+	g_GoodMessageCounter = ((uint16_t)GoodMessageCounter_RawTwoBytes[0] << 8) + (uint16_t)GoodMessageCounter_RawTwoBytes[1];
+
+	uint8_t BadMessageCounter_RawTwoBytes[2];
+	memcpy((uint8_t*)&BadMessageCounter_RawTwoBytes, (uint8_t*)(g_TxStatsRawBuffer + 15), 2);
+	g_BadMessageCounter = ((uint16_t)BadMessageCounter_RawTwoBytes[0] << 8) + (uint16_t)BadMessageCounter_RawTwoBytes[1];
 
 	uint8_t Frequency_RawTwoBytes[2];
 	memcpy((uint8_t*)&Frequency_RawTwoBytes, (uint8_t*)(g_TxStatsRawBuffer + 17), 2);
@@ -275,5 +294,41 @@ void JG_SubParse_TwoBytesTo1Q15(uint8_t* OutIntegerPart1Bit, uint16_t* OutDecima
 
 	*OutIntegerPart1Bit = TmpOutIntegerPart1Bit;
 	*OutDecimalPart15Bits = TmpOutDecimalPart15Bits;
+
+}
+
+void JG_SubParse_Configuration(){
+	uint8_t Mask_5LSbValid = 0x1F;
+	uint8_t Mask_3MSbValid = 0xE0;
+	uint8_t MaxPowerValue = (g_ConfigurationBuffer[0] & Mask_5LSbValid);
+	uint8_t PowerClass = (g_ConfigurationBuffer[0] & Mask_3MSbValid);
+
+	uint32_t MaxPower_W =  MaxPowerValue / 2;
+	while(PowerClass){
+		MaxPower_W = MaxPower_W * 10;
+		--PowerClass;
+	}
+	g_ReceiverMaxPower_W = MaxPower_W;
+
+	g_PowerTransferControlType = ((0x1 << 8) & g_ConfigurationBuffer[2]) >> 8;
+	g_NumberOfAdditionalPackets = (0x7) & g_ConfigurationBuffer[2];
+
+	uint8_t Mask_5MSbValid = 0xF8;
+	uint8_t Mask_3LSbValid = 0x07;
+	g_WindowSize_ms = ((Mask_5MSbValid & g_ConfigurationBuffer[3]) >> 3) * 4;
+	g_WindowOffset_ms = (Mask_3LSbValid & g_ConfigurationBuffer[3]) * 4;
+}
+
+void JG_SubParse_Identification(){
+	uint8_t Mask_4MSbValid = 0xF0;
+	uint8_t Mask_4LSbValid = 0x0F;
+	g_MajorQiVersion = (Mask_4MSbValid & g_IdentificationBffer[0]) >> 4;
+	g_MinorQiVersion = (Mask_4LSbValid & g_IdentificationBffer[0]);
+
+	g_ManufacturerCode = (g_IdentificationBffer[1] << 8) + g_IdentificationBffer[2];
+	g_ExtendedMode = ((0x01 << 7) & g_IdentificationBffer[3]) >> 7;
+
+	uint8_t Mask_7LSbValid = 0x7F;
+	g_BasicDeviceIdentifier = ((Mask_7LSbValid & g_IdentificationBffer[3]) << 24) + (g_IdentificationBffer[4] << 16) + (g_IdentificationBffer[5] << 8) + (g_IdentificationBffer[6]);
 
 }
