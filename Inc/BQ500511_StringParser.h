@@ -6,7 +6,7 @@
 
 #include "BQ500511_Parser.h"
 
-#define PARSED_STRING_BUFFER_LENGTH 100
+#define PARSED_STRING_BUFFER_LENGTH 300
 
 extern volatile uint8_t g_ParsedStringBuffer[PARSED_STRING_BUFFER_LENGTH];
 
@@ -14,6 +14,7 @@ size_t JG_StringParse_DeviceId();
 size_t JG_StringParse_PLDMonitor();
 size_t JG_StringParse_RxStats();
 size_t JG_StringParse_TxStats();
+size_t JG_StringParse_MATLABDiagnostics();
 size_t JG_SubStringParse_19Q13(uint8_t* OutStringBuffer, uint32_t IntegerPart19Bits, uint16_t DecimalPart13Bits);
 size_t JG_SubStringParse_6Q10(uint8_t* OutStringBuffer, uint8_t IntegerPart6Bits, uint16_t DecimalPart10Bits);
 size_t JG_SubStringParse_13Q3(uint8_t* OutStringBuffer, uint16_t IntegerPart13Bits, uint8_t DecimalPart3Bits);

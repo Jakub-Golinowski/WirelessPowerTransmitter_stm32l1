@@ -30,10 +30,12 @@ extern volatile uint8_t g_I2C_Receive_Buffer[100];
 extern volatile uint8_t g_DeviceIDRawBuffer[BQ500511A_I2C_DEVICE_ID_COMMAND_RESPONSE_LENGTH];
 extern volatile uint8_t g_PLDMonitorRawBuffer[BQ500511A_I2C_PLD_MONITOR_COMMAND_RESPONSE_LENGTH];
 extern volatile uint8_t g_PLDThresholdRawBuffer[BQ500511A_I2C_PLD_THRESHOLD_COMMAND_RESPONSE_LENGTH];
+extern volatile uint8_t g_PLDThresholdNewValueRawBuffer[BQ500511A_I2C_PLD_THRESHOLD_COMMAND_RESPONSE_LENGTH];
 extern volatile uint8_t g_RxPropRawBuffer[BQ500511A_I2C_RX_PROP_COMMAND_RESPONSE_LENGTH];
 extern volatile uint8_t g_RxPropCountRawBuffer[BQ500511A_I2C_RX_PROP_COUNT_COMMAND_RESPONSE_LENGTH];
 extern volatile uint8_t g_RxStatsRawBuffer[BQ500511A_I2C_RX_STATS_COMMAND_RESPONSE_LENGTH];
 extern volatile uint8_t g_TxStatsRawBuffer[BQ500511A_I2C_TX_STATS_COMMAND_RESPONSE_LENGTH];
+
 
 extern I2C_HandleTypeDef hi2c1; //Struktura potrzebna do korzystania z peryferium i2c
 
@@ -44,5 +46,7 @@ void JG_I2C_ReadRxProp(); //Zawsze zwraca 22 bajty (dot. proprietary packets)
 void JG_I2C_ReadRxPropCount(); //Zawsze zwraca 2 bajty
 void JG_I2C_ReadRxStats(); //Zawsze zwraca 32 bajty
 void JG_I2C_ReadTxStats(); //Zawsze zwraca 32 bajty
+
+void JG_I2C_WriteNewPLDThresholdValue();
 
 #endif /* BQ500511_I2C_H_ */

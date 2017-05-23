@@ -20,6 +20,7 @@ volatile uint16_t g_OutputFrequency_kHz_int;
 volatile uint16_t g_OutputFrequency_kHz_decimal;
 
 volatile uint16_t g_PLD_Threshold;
+volatile uint16_t g_NewPLDThresholdRawValue;
 
 volatile uint8_t g_RxPropBuffer[BQ500511A_RX_PROP_BUFFER_LENGTH];
 
@@ -185,6 +186,12 @@ void JG_Parse_TxStats(){
 	memcpy((uint8_t*)&g_CS100Byte, (uint8_t*)(g_TxStatsRawBuffer + 31),1);
 }
 
+void JG_Parse_FODThresholdNewValueFromString(){
+	g_NewPLDThresholdRawValue = atoi((char*)g_FODThresholdNewValueBuffer);
+
+	memcpy((uint16_t*)g_PLDThresholdNewValueRawBuffer, (uint16_t*)&g_NewPLDThresholdRawValue, 2);
+
+}
 
 
 

@@ -211,6 +211,158 @@ size_t JG_StringParse_TxStats(){
 
 }
 
+size_t JG_StringParse_MATLABDiagnostics(){
+
+	//DeviceId
+	uint8_t DeviceIdString[30];
+	snprintf((char*)DeviceIdString, 30, "%s", (char*)g_DeviceIdBuffer);
+
+	//DCInputVoltage
+	uint8_t DCInputVoltageString[15] = {0};
+	JG_SubStringParse_6Q10(DCInputVoltageString, g_DCInputVoltage_V_int, g_DCInputVoltage_V_decimal);
+
+	//DCInputCurrent
+	uint8_t DCInputCurrentString[15] = {0};
+	JG_SubStringParse_13Q3(DCInputCurrentString, g_DCInputCurrent_mA_int, g_DCInputCurrent_mA_decimal);
+
+	//CurrentOut
+	uint8_t CurrentOut_mAString[15] = {0};
+	JG_SubStringParse_13Q3(CurrentOut_mAString, g_CurrentOut_mA_int, g_CurrentOut_mA_decimal);
+
+	//CalculatedInputPower
+	uint8_t CalculatedInputPowerString[15] = {0};
+	JG_SubStringParse_19Q13(CalculatedInputPowerString, g_CalculatedInputPower_mW_int, g_CalculatedInputPower_mW_decimal);
+
+	//OutputFrequency
+	uint8_t OutputFrequency_kHz_String[10] = {0};
+	JG_SubStringParse_10Q6(OutputFrequency_kHz_String, g_OutputFrequency_kHz_int, g_OutputFrequency_kHz_decimal);
+
+	//DutyCycle_percent
+	uint8_t DutyCycle_percentString[15] = {0};
+	JG_SubStringParse_1Q15(DutyCycle_percentString,g_DutyCycle_percent_int, g_DutyCycle_percent_decimal);
+
+	//ReportedReceivedPower
+	uint32_t ReportedMaxPower_mW = (g_RawReportedMaxPower * 500);
+	uint32_t ReportedPowerQuant_mW = ReportedMaxPower_mW / 128;
+	uint16_t ReportedReceivedPower_mW = ReportedPowerQuant_mW * g_ReportedReceivedPower_128thOfMaxPower;
+	char ReportedReceivedPower_mW_String[10] = {0};
+	snprintf((char*)&ReportedReceivedPower_mW_String, 10, "%d", ReportedReceivedPower_mW);
+
+	//ReportedMaxPower
+	char ReportedMaxPowerString[10] = {0};
+	snprintf((char*)&ReportedMaxPowerString, 10, "%d", ((uint16_t)g_RawReportedMaxPower * 500));
+
+	//CalculatedParasiticLoss
+	uint8_t CalculatedParasiticLossString[15] = {0};
+	JG_SubStringParse_19Q13(CalculatedParasiticLossString, g_CalculatedParasiticLoss_mW_int, g_CalculatedParasiticLoss_mW_decimal);
+
+	//ThresholdSetFromResistor
+	uint8_t ThresholdSetFromResistorString[15] = {0};
+	JG_SubStringParse_19Q13(ThresholdSetFromResistorString, g_ThresholdSetFromResistor_mW_int, g_ThresholdSetFromResistor_mW_decimal);
+
+	//GoodMessageCounter
+	uint8_t GoodMessageCounterString[15] = {0};
+	snprintf((char*)&GoodMessageCounterString, 15, "%u", (uint16_t)g_GoodMessageCounter);
+
+	//BadMessageCounter
+	uint8_t BadMessageCounterString[15] = {0};
+	snprintf((char*)&BadMessageCounterString, 15, "%u", (uint16_t)g_BadMessageCounter);
+
+	//Signal Strength
+	char SignalStrengthString[4];
+	snprintf((char*)&SignalStrengthString, 4, "%u", (uint16_t)g_SignalStrengthByte);
+
+	//EndPowerTransfer
+	char EndPowerTransferString[4];
+	snprintf((char*)&EndPowerTransferString, 4, "%u", (uint16_t)g_EndPowerTransferByte);
+
+	//ControlError
+	char ControlErrorString[4];
+	snprintf((char*)&ControlErrorString, 4, "%u", (uint16_t)g_ControlErrorByte);
+
+	//ReceivedPower
+	char ReceivedPowerString[4];
+	snprintf((char*)&ReceivedPowerString, 4, "%u", (uint16_t)g_ReceivedPowerByte);
+
+	//ChargeStatus
+	char ChargeStatusString[4];
+	snprintf((char*)&ChargeStatusString, 4, "%u", (uint16_t)g_ChargeStatusByte);
+
+	//Holdoff
+	char HoldoffString[4];
+	snprintf((char*)&HoldoffString, 4, "%u", (uint16_t)g_HoldoffByte);
+
+	//Configuration
+	//MaxPower
+	char MaxPower_WString[10];
+	snprintf((char*)&MaxPower_WString, 10, "%u", (uint16_t)g_ReceiverMaxPower_W);
+
+	//PowerTransferControlType
+	char PowerTransferControlTypeString[3];
+	snprintf((char*)&PowerTransferControlTypeString, 3, "%d", (uint16_t)g_PowerTransferControlType);
+
+	//NumberOfAdditionalPackets
+	char NumberOfAdditionalPacketsString[10];
+	snprintf((char*)&NumberOfAdditionalPacketsString, 10, "%d", (uint16_t)g_NumberOfAdditionalPackets);
+
+	//WindowSize_ms
+	char WindowSize_msString[10];
+	snprintf((char*)&WindowSize_msString, 10, "%d", (uint16_t)g_WindowSize_ms);
+
+	//WindowOffset_ms
+	char WindowOffset_msString[10];
+	snprintf((char*)&WindowOffset_msString, 10, "%d", (uint16_t)g_WindowOffset_ms);
+
+	//Identification
+	//QiVersion
+	char QiVersionString[5];
+	snprintf((char*)&QiVersionString, 5, "%d.%d", (uint16_t)g_MajorQiVersion, (uint16_t)g_MinorQiVersion);
+
+	//ManufacturerCode
+	char ManufacturerCodeString[10];
+	snprintf((char*)&ManufacturerCodeString, 10, "%d", (uint16_t)g_ManufacturerCode);
+
+	//ExtendedMode
+	char ExtendedModeString[3];
+	snprintf((char*)&ExtendedModeString, 3, "%d", (uint16_t)g_ExtendedMode);
+
+	//BasicDeviceIdentifier
+	char BasicDeviceIdentifierString[15];
+	snprintf((char*)&BasicDeviceIdentifierString, 15, "%x%x", (uint16_t)(g_BasicDeviceIdentifier >> 16), (uint16_t)g_BasicDeviceIdentifier);
+
+	return snprintf((char*)g_ParsedStringBuffer, PARSED_STRING_BUFFER_LENGTH, "%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\r\n",
+																													(char*)DeviceIdString,
+																													(char*)DCInputVoltageString,
+																													(char*)DCInputCurrentString,
+																													(char*)CurrentOut_mAString,
+																													(char*)CalculatedInputPowerString,
+																													(char*)OutputFrequency_kHz_String,
+																													(char*)DutyCycle_percentString,
+																													(char*)ReportedReceivedPower_mW_String,
+																													(char*)ReportedMaxPowerString,
+																													(char*)CalculatedParasiticLossString,
+																													(char*)ThresholdSetFromResistorString,
+																													(char*)GoodMessageCounterString,
+																													(char*)BadMessageCounterString,
+																													(char*)SignalStrengthString,
+																													(char*)EndPowerTransferString,
+																													(char*)ControlErrorString,
+																													(char*)ReceivedPowerString,
+																													(char*)ChargeStatusString,
+																													(char*)HoldoffString,
+																													(char*)MaxPower_WString,
+																													(char*)PowerTransferControlTypeString,
+																													(char*)NumberOfAdditionalPacketsString,
+																													(char*)WindowSize_msString,
+																													(char*)WindowOffset_msString,
+																													(char*)QiVersionString,
+																													(char*)ManufacturerCodeString,
+																													(char*)ExtendedModeString,
+																													(char*)BasicDeviceIdentifierString);
+
+
+}
+
 size_t JG_SubStringParse_19Q13(uint8_t* OutStringBuffer, uint32_t IntegerPart19Bits, uint16_t DecimalPart13Bits){
 	//This function discards 3 msbits from integer part (leaving 16 bits) -> not a problem as the valid int range is to 5000 only (less than 65 535)
 

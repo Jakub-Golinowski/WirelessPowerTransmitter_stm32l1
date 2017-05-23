@@ -2,6 +2,8 @@
 #define BQ500511_PARSER_H_
 
 #include "BQ500511_I2C.h"
+#include "JG_BinaryProtocolCommands.h"
+#include <stdlib.h>
 
 #define BQ500511A_DEVICE_ID_BUFFER_LENGTH				(BQ500511A_I2C_DEVICE_ID_COMMAND_RESPONSE_LENGTH - 1)
 #define BQ500511A_RX_PROP_BUFFER_LENGTH					(BQ500511A_I2C_RX_PROP_COMMAND_RESPONSE_LENGTH - 1)
@@ -28,6 +30,7 @@ extern volatile uint16_t g_OutputFrequency_kHz_int;
 extern volatile uint16_t g_OutputFrequency_kHz_decimal;
 
 extern volatile uint16_t g_PLD_Threshold;
+extern volatile uint16_t g_NewPLDThresholdRawValue;
 
 extern volatile uint8_t g_RxPropBuffer[BQ500511A_RX_PROP_BUFFER_LENGTH];
 
@@ -80,6 +83,8 @@ void JG_Parse_RxProp();
 void JG_Parse_RxPropCount();
 void JG_Parse_RxStats();
 void JG_Parse_TxStats();
+
+void JG_Parse_FODThresholdNewValueFromString();
 
 void JG_SubParse_ThresholdSetFromResistor();
 void JG_SubParse_FourBytesTo19Q13(uint32_t* OutIntegerPart19Bits, uint16_t* OutDecimalPart13Bits, uint8_t* RawFourBytesArrayMSBFirst);

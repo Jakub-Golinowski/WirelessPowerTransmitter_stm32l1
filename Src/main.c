@@ -38,10 +38,7 @@
 #include "BQ500511_Parser.h"
 #include "UART_Diagnostics.h"
 #include "Tests.h"
-
-#define JG_Command_IdentificationCommandCode (0x69)		// 0x69 oznacza 'i' w kodzie ASCII
-#define JG_Command_IdentificationCommandRespone ("Wireless Power Transmitter WPC v1.2 A11 Low Power\n\rJakub Golinowski ZMiSP ISE 03/2017.\n\rCompilation time: " __DATE__ " " __TIME__ "\n\r")
-#define JG_Command_IdentificationCommandResponseLength (sizeof(JG_Command_IdentificationCommandRespone)-1)
+#include "JG_BinaryProtocolCommands.h"
 
 
 
@@ -50,12 +47,21 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
+TIM_HandleTypeDef htim7;
+
 UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_usart3_tx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+volatile uint8_t ReceivedCommandByte;
+volatile uint8_t g_RepeatModeTimerTimeout_seconds = 1;
+volatile uint8_t g_RepeatModeTimer_seconds = 0;
+//State flags
+volatile uint8_t g_RepeatModeTimerTimedOutFlag;
+volatile uint8_t g_MeasurementsFlag = 0;
+volatile uint8_t g_FODThresholdReadModeFlag = 0;
+volatile uint8_t g_FODThresholdNewValueReadyFlag = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,10 +71,62 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_TIM7_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
+{
+	if(g_FODThresholdReadModeFlag == SET)
+	{
+		//zakoñcz odbiór jeœli delimiter
+		if(g_FODThresholdSingleByte == FOD_THRESHOLD_VALUE_DELIMITER)
+		{
+			g_FODThresholdNewValueReadyFlag = 1;
+		}
 
+		else
+		{
+			g_FODThresholdNewValueBuffer[g_FODThresholdNewValueBuffer_Index] = g_FODThresholdSingleByte;
+			++g_FODThresholdNewValueBuffer_Index;
+
+			HAL_UART_Receive_IT(&huart3, (uint8_t*)&g_FODThresholdSingleByte, 1);
+		}
+	}
+	else
+	{
+		uint8_t tmp_head;
+		tmp_head = (command_buffer_head_index_GV+1) & COMMAND_BUFFER_MASK;
+		if(tmp_head == command_buffer_tail_index_GV )		// If the circular buffer is full (head caught up to tail),
+			g_CommandBufferFullFlag = SET;						// set the flag and stop writing new data to buffer
+		else
+		{
+			command_buffer_head_index_GV = tmp_head;
+			command_buffer_GV[command_buffer_head_index_GV] = ReceivedCommandByte;
+		}
+
+		g_CommandReceivedCounter = SET;
+	}
+
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	 if(htim->Instance == TIM7)
+	 {
+		 ++g_RepeatModeTimer_seconds;
+
+		 g_MeasurementsFlag = SET;
+
+		 if (g_RepeatModeTimer_seconds == g_RepeatModeTimerTimeout_seconds)
+		 {
+			 g_RepeatModeTimerTimedOutFlag = SET;
+			 g_RepeatModeTimer_seconds = 0;
+		 }
+
+	 }
+
+}
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
@@ -85,7 +143,7 @@ int main(void)
   /* MCU Configuration----------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-HAL_Init();
+  HAL_Init();
 
   /* Configure the system clock */
   SystemClock_Config();
@@ -95,37 +153,72 @@ HAL_Init();
   MX_DMA_Init();
   MX_USART3_UART_Init();
   MX_I2C1_Init();
+  MX_TIM7_Init();
 
   /* USER CODE BEGIN 2 */
+  //Wystawienie zegarana na PA8
   HAL_RCC_MCOConfig(RCC_MCO1, RCC_MCOSOURCE_SYSCLK, RCC_MCODIV_16);
+  //Inicjalizacja odbierania pojedynczego bajtu po UART
+  HAL_UART_Receive_IT(&huart3, (uint8_t*)&ReceivedCommandByte, 1);
+  //Inicjalizacja Timera TIM7
+  HAL_TIM_Base_Start_IT(&htim7);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  uint8_t CurrentCommand = 0;
+
   while (1)
   {
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-  JG_I2C_ReadDeviceId();
-  JG_I2C_ReadPLDMonitor();
-  JG_I2C_ReadRxStats();
-  JG_I2C_ReadTxStats();
+  if(g_CommandReceivedCounter == SET)
+	{
+	  JG_CommandBuffer_GetCommand(&CurrentCommand);
+	  g_CommandReceivedCounter = RESET;
+	  JG_ProcessCurrentCommand(CurrentCommand);
+	}
+  if(g_MeasurementsFlag == SET)
+  {
+	JG_I2C_ReadDeviceId();
+	JG_I2C_ReadPLDMonitor();
+	JG_I2C_ReadRxStats();
+	JG_I2C_ReadTxStats();
 
-  JG_Parse_DeviceBuffer();
-  JG_Parse_PLDMonitor();
-  JG_Parse_RxStats();
-  JG_Parse_TxStats();
+	JG_Parse_DeviceBuffer();
+	JG_Parse_PLDMonitor();
+	JG_Parse_RxStats();
+	JG_Parse_TxStats();
 
-  size_t size = JG_StringParse_DeviceId();
-  JG_UART_Transmit_ParsedString(size);
-  size = JG_StringParse_PLDMonitor();
-  JG_UART_Transmit_ParsedString(size);
-  size = JG_StringParse_RxStats();
-  JG_UART_Transmit_ParsedString(size);
-  size = JG_StringParse_TxStats();
-  JG_UART_Transmit_ParsedString(size);
-  HAL_Delay(500);
+	g_MeasurementsFlag = RESET;
+  }
+
+  if(g_RepeatModeFlag && g_RepeatModeTimerTimedOutFlag){
+	  size_t size = JG_StringParse_MATLABDiagnostics();
+	  JG_UART_Transmit_ParsedString(size);
+	  g_RepeatModeTimerTimedOutFlag = RESET;
+  }
+  if(g_FODThresholdNewValueReadyFlag == SET)
+  {
+	  JG_Parse_FODThresholdNewValueFromString();
+	  JG_I2C_WriteNewPLDThresholdValue();
+	  HAL_Delay(100);
+	  JG_I2C_ReadPLDTreshhold();
+	  JG_Parse_PLDThreshold();
+	  if(g_PLD_Threshold == g_NewPLDThresholdRawValue)
+		  HAL_UART_Transmit(&huart3, (uint8_t*)"Change OK\r\n", sizeof("Change OK\r\n")-1, 1000);
+	  else
+		  HAL_UART_Transmit(&huart3, (uint8_t*)"Change not successful\r\n", sizeof("Change not successful\r\n")-1, 1000);
+
+	  g_FODThresholdNewValueReadyFlag = RESET;
+	  g_FODThresholdReadModeFlag = RESET;
+	  HAL_UART_Receive_IT(&huart3, (uint8_t*)&ReceivedCommandByte, 1);
+  }
+
+  HAL_UART_StateTypeDef uartstate = HAL_UART_GetState(&huart3);
+  uint32_t              UartError = HAL_UART_GetError(&huart3);
 
 
   }
@@ -188,6 +281,30 @@ static void MX_I2C1_Init(void)
   hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
   hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
   if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+}
+
+/* TIM7 init function */
+static void MX_TIM7_Init(void)
+{
+
+  TIM_MasterConfigTypeDef sMasterConfig;
+
+  htim7.Instance = TIM7;
+  htim7.Init.Prescaler = 5999;
+  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim7.Init.Period = 999;
+  if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
