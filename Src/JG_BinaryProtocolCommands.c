@@ -76,6 +76,31 @@ void JG_ProcessCurrentCommand(uint8_t Command)
 			break;
 
 		}
+		case JG_Command_SetUSBJ1AsPowerSourceCommandCode:
+		{
+			HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_SET);
+			HAL_UART_Transmit(&huart3,(uint8_t*)JG_Command_SetUSBJ1AsPowerSourceResponse,JG_Command_SetUSBJ1AsPowerSourceResponeLength, 100);
+
+
+			HAL_UART_Receive_IT(&huart3, (uint8_t*)&ReceivedCommandByte, 1);
+			break;
+		}
+		case JG_Command_SetDCJackJ2AsPowerSourceCommandCode:
+		{
+			HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_RESET);
+			HAL_UART_Transmit(&huart3,(uint8_t*)JG_Command_SetDCJackJ2AsPowerSourceResponse,JG_Command_SetDCJackJ2AsPowerSourceResponeLength, 100);
+
+			HAL_UART_Receive_IT(&huart3, (uint8_t*)&ReceivedCommandByte, 1);
+			break;
+		}
+		case JG_Command_ADCResultsQueryCommandCode:
+		{
+			JG_ParseAndSendADCMeasurementsToUART();
+
+			HAL_UART_Receive_IT(&huart3, (uint8_t*)&ReceivedCommandByte, 1);
+			break;
+
+		}
 		default :
 			{
 				HAL_UART_Transmit_DMA(&huart3,(uint8_t*)JG_Command_UnknownCommandRespone,JG_Command_UnknownCommandResponseLength);
